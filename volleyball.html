@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Команд (Волейбол)</title>
+    <style>
+        /* Базовые стили (CSS) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h2 { text-align: center; color: #2c3e50; }
+
+        /* Стили формы ввода */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        input { flex: 2; } /* Имя занимает больше места */
+        select { flex: 1; }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-add { background-color: #27ae60; color: white; }
+        .btn-add:hover { background-color: #219150; }
+
+        .btn-gen { 
+            background-color: #3498db; 
+            color: white; 
+            width: 100%; 
+            margin-top: 20px;
+            padding: 15px;
+        }
+        .btn-gen:hover { background-color: #2980b9; }
+
+        /* Таблица игроков */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th { background-color: #f8f9fa; color: #555; }
+
+        .level-strong { color: #e74c3c; font-weight: bold; }
+        .level-mid { color: #f39c12; font-weight: bold; }
+        .level-weak { color: #27ae60; font-weight: bold; }
+
+        .delete-btn {
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Блок результатов */
+        #results { margin-top: 30px; }
+        
+        .team-card {
+            background: #eef2f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #34495e;
+        }
+        
+        .team-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .team-score { font-size: 14px; color: #7f8c8d; font-weight: normal; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🏐 Волейбол: Генератор Команд</h2>
+    
+    <div class="input-group">
+        <input type="text" id="playerName" placeholder="Имя игрока">
+        <select id="playerSkill">
+            <option value="3">Сильный</option>
+            <option value="2">Средний</option>
+            <option value="1">Слабый</option>
+        </select>
+        <button class="btn-add" onclick="addPlayer()">+</button>
+    </div>
+
+    <div id="playerCount">Игроков: 0</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Имя</th>
+                <th>Уровень</th>
+                <th>Удалить</th>
+            </tr>
+        </thead>
+        <tbody id="playerList">
+            </tbody>
+    </table>
+
+    <button class="btn-gen" onclick="generateTeams()">Сгенерировать Команды</button>
+
+    <div id="results"></div>
+</div>
+
+<script>
+    // --- JavaScript Логика ---
+    
+    let players = [];
+
+    // Добавление игрока
+    function addPlayer() {
+        const nameInput = document.getElementById('playerName');
+        const skillInput = document.getElementById('playerSkill');
+        const name = nameInput.value.trim();
+        const skill = parseInt(skillInput.value);
+
+        if (name === "") {
+            alert("Введите имя игрока!");
+            return;
+        }
+
+        // Добавляем в массив
+        players.push({ name: name, skill: skill });
+        
+        // Очищаем поле ввода
+        nameInput.value = "";
+        nameInput.focus();
+        
+        renderList();
+    }
+
+    // Удаление игрока
+    function removePlayer(index) {
+        players.splice(index, 1);
+        renderList();
+    }
+
+    // Отрисовка списка
+    function renderList() {
+        const list = document.getElementById('playerList');
+        const countDiv = document.getElementById('playerCount');
+        list.innerHTML = "";
+        
+        players.forEach((player, index) => {
+            let skillText = "";
+            let skillClass = "";
+            
+            if(player.skill === 3) { skillText = "Сильный"; skillClass = "level-strong"; }
+            else if(player.skill === 2) { skillText = "Средний"; skillClass = "level-mid"; }
+            else { skillText = "Слабый"; skillClass = "level-weak"; }
+
+            list.innerHTML += `
+                <tr>
+                    <td>${player.name}</td>
+                    <td class="${skillClass}">${skillText}</td>
+                    <td class="delete-btn" onclick="removePlayer(${index})">✕</td>
+                </tr>
+            `;
+        });
+        
+        countDiv.innerText = `Игроков: ${players.length}`;
+    }
+
+    // Генерация команд
+    function generateTeams() {
+        if (players.length < 2) {
+            alert("Нужно минимум 2 игрока!");
+            return;
+        }
+
+        // 1. Сортируем игроков от сильного к слабому
+        // Это нужно для алгоритма "змейка"
+        const sortedPlayers = [...players].sort((a, b) => b.skill - a.skill);
+
+        // 2. Определяем количество команд
+        let teamCount = 2;
+        if (players.length > 12) {
+            // Если больше 12, делим на 6 (стандартная команда) и округляем вверх
+            // Например, 13 чел / 6 = 2.16 -> 3 команды
+            teamCount = Math.ceil(players.length / 6);
+        }
+
+        // Создаем пустые массивы для команд
+        let teams = Array.from({ length: teamCount }, () => []);
+        let teamScores = new Array(teamCount).fill(0);
+
+        // 3. Распределяем игроков (Жадный алгоритм + Змейка)
+        // Мы кладем самого сильного текущего игрока в ту команду, где сейчас меньше всего сумма скиллов
+        // Если суммы равны, то туда, где меньше людей
+        
+        sortedPlayers.forEach(player => {
+            // Находим команду с наименьшим общим скиллом
+            let minScore = Infinity;
+            let targetTeamIndex = 0;
+
+            // Проходим по командам и ищем "самую слабую" на данный момент
+            for (let i = 0; i < teamCount; i++) {
+                // Приоритет: сначала выравниваем количество людей (чтобы не было 7 против 5), потом силу
+                if (teams[i].length < teams[targetTeamIndex].length) {
+                    targetTeamIndex = i;
+                    break; // Нашли команду где меньше людей, добавляем туда
+                }
+                
+                // Если людей поровну, смотрим по силе
+                if (teamScores[i] < minScore && teams[i].length <= teams[targetTeamIndex].length) {
+                    minScore = teamScores[i];
+                    targetTeamIndex = i;
+                }
+            }
+
+            teams[targetTeamIndex].push(player);
+            teamScores[targetTeamIndex] += player.skill;
+        });
+
+        // 4. Вывод результатов
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = "<h3>Результаты жеребьевки:</h3>";
+
+        teams.forEach((team, index) => {
+            const teamNames = team.map(p => p.name).join(', ');
+            // Подсчет примерной силы для отображения
+            let totalPower = teamScores[index]; 
+            
+            resultsDiv.innerHTML += `
+                <div class="team-card">
+                    <div class="team-title">
+                        Команда ${index + 1}
+                        <span class="team-score">Сила: ${totalPower}</span>
+                    </div>
+                    <div>${teamNames}</div>
+                </div>
+            `;
+        });
+    }
+</script>
+
+</body>
+</html>
